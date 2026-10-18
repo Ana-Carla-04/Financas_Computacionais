@@ -1,4 +1,6 @@
 package br.edu.ufersa.Financas_Computacionais.features.interpolacao;
 
-public class CurvaJurosService {
+public enum TipoMetodoInterpolacao {
+    LAGRANGE,
+    NEWTON
 }
