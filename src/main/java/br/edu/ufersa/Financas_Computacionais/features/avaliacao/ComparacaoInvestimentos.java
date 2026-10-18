@@ -1,6 +1,4 @@
-package br.edu.ufersa.Financas_Computacionais.avaliacao;
-
-import br.edu.ufersa.Financas_Computacionais.features.avaliacao.ComparacaoInvestimentosService;
+package br.edu.ufersa.Financas_Computacionais.features.avaliacao;
 
 public class ComparacaoInvestimentos {
 

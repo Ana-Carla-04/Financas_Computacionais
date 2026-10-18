@@ -1,6 +1,5 @@
-package br.edu.ufersa.Financas_Computacionais.amortizacao;
+package br.edu.ufersa.Financas_Computacionais.features.amortizacao;
 
-import br.edu.ufersa.Financas_Computacionais.features.amortizacao.SistemaAmortizacaoController;
 import br.edu.ufersa.Financas_Computacionais.features.amortizacao.dto.AmortizacaoRequestDTO;
 import br.edu.ufersa.Financas_Computacionais.features.amortizacao.dto.TabelaAmortizacaoDTO;
 
