@@ -4,6 +4,7 @@ import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.dto.Condi
 import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.exception.MatrizSingularException;
 import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.exception.PivoNuloException;
 import br.edu.ufersa.Financas_Computacionais.shared.validation.ValidadorMatriz;
+import org.springframework.stereotype.Service;
 
 /**
  * Numero de condicionamento na norma infinito:
@@ -14,6 +15,7 @@ import br.edu.ufersa.Financas_Computacionais.shared.validation.ValidadorMatriz;
  * A inversa é obtida resolvendo A*X = I coluna a coluna com a
  * fatoração LU já existente (Doolittle), reaproveitando os fatores.
  */
+@Service
 public class CondicionamentoService {
 
     private final FatoracaoLUService fatoracaoLUService;

@@ -1,7 +1,9 @@
 package br.edu.ufersa.Financas_Computacionais.features.avaliacao;
 
 import java.util.OptionalDouble;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ComparacaoInvestimentosService {
 
     private static final int ITERACOES_MAXIMAS_TIR = 200;

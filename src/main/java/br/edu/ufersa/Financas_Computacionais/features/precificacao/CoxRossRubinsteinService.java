@@ -4,7 +4,9 @@ import br.edu.ufersa.Financas_Computacionais.features.precificacao.dto.CoxRossRu
 import br.edu.ufersa.Financas_Computacionais.features.precificacao.dto.CoxRossRubinsteinResponseDTO;
 import br.edu.ufersa.Financas_Computacionais.features.precificacao.exception.ParametrosPrecificacaoInvalidosException;
 import br.edu.ufersa.Financas_Computacionais.features.precificacao.exception.ProbabilidadeInvalidaException;
+import org.springframework.stereotype.Service;
 
+@Service
 public class CoxRossRubinsteinService {
 
     // Parâmetros da árvore calculados a partir da entrada (antes eram campos

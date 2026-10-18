@@ -5,7 +5,9 @@ import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.exception
 import br.edu.ufersa.Financas_Computacionais.shared.exception.DiagonalNulaException;
 import br.edu.ufersa.Financas_Computacionais.shared.util.SubstituicaoTriangular;
 import br.edu.ufersa.Financas_Computacionais.shared.validation.ValidadorMatriz;
+import org.springframework.stereotype.Service;
 
+@Service
 public class FatoracaoLUService {
 
     // Decomposicao A = LU pelo metodo de Doolittle

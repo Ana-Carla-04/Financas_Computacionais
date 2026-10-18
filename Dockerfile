@@ -23,4 +23,6 @@ COPY --from=build --chown=app:app \
 
 USER app
 
-ENTRYPOINT ["java", "-cp", "/app/app.jar", "br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.MetodosNumericosController"]
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

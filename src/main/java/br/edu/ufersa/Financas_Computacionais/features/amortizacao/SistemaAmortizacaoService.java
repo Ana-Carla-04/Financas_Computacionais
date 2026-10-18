@@ -9,6 +9,7 @@ import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.Condicion
 import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.FatoracaoLUService;
 import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.dto.CondicionamentoResponseDTO;
 import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.dto.FatoracaoLUResponseDTO;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ import java.util.Locale;
  *   matriz quase singular -> kappa explode. E' o alerta numerico que
  *   este Service expoe para a equipe.
  */
+@Service
 public class SistemaAmortizacaoService {
 
     private static final double TOLERANCIA = 1e-12;

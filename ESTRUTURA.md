@@ -4,10 +4,12 @@ Projeto academico em Java para implementar metodos numericos e modelos de financ
 
 ## Tecnologias e configuracao
 
-- Java configurado no Maven com `source` e `target` 26.
+- Java configurado para compilar com `release` 25; o build e a imagem usam JDK 26.
 - Maven (`pom.xml`) e usado como sistema de build.
-- O projeto nao declara dependencias externas no `pom.xml`.
-- Nao ha testes automatizados em `src/test` no estado atual.
+- Spring Boot 3.5 fornece a aplicacao web e os endpoints REST.
+- Spring Boot Starter Validation habilita Jakarta Bean Validation nos corpos HTTP.
+- JUnit 5 e Spring Boot Test cobrem servicos e endpoints.
+- Maven Surefire executa os testes; Spring Boot Maven Plugin gera o JAR executavel.
 
 ## Organizacao dos pacotes
 
@@ -16,6 +18,7 @@ src/main/java/br/edu/ufersa/Financas_Computacionais/
 |-- Main.java
 |-- avaliacao/
 |-- features/
+|   |-- amortizacao/
 |   |-- avaliacao/
 |   |-- interpolacao/
 |   |-- metodosNumericos/
@@ -40,19 +43,33 @@ src/main/java/br/edu/ufersa/Financas_Computacionais/
 
 ### `Main.java`
 
-Ponto de entrada planejado para integrar os calculos. Atualmente contem apenas o esqueleto comentado; os exemplos executaveis estao nos controllers de cada area.
+Ponto de entrada Spring Boot, anotado com `@SpringBootApplication`. Inicializa a API REST e descobre os controllers e services sob o pacote base.
 
 ### `features/`
 
-Contem os servicos que concentram a logica das funcionalidades e os controllers usados para demonstracoes no console.
+Contem os servicos de negocio, DTOs, excecoes e controllers. Os controllers `*RestController` atendem HTTP; os controllers antigos de demonstracao continuam disponiveis para execucao manual no console.
 
+- `amortizacao/`: `SistemaAmortizacaoService` calcula tabelas SAC e PRICE e inclui diagnostico de condicionamento. O calculo PRICE ainda falha devido a matriz singular atualmente construida; essa falha esta registrada por teste.
 - `avaliacao/`: `ComparacaoInvestimentosService` calcula VPL, TIR, payback simples e payback descontado, e compara dois projetos pelo VPL. `ComparacaoMetodosService` ainda e um esqueleto.
 - `interpolacao/`: servicos de curva de juros e volatilidade implicita; ainda sem implementacao funcional.
-- `metodosNumericos/`: LU, Cholesky, Jacobi e Gauss-Seidel implementados. `MetodosNumericosController` demonstra esses quatro metodos. Eliminacao de Gauss, interpolacao linear, Newton-Raphson, splines, condicionamento e analise de estabilidade ainda estao pendentes.
+- `metodosNumericos/`: LU, Cholesky, Jacobi, Gauss-Seidel e condicionamento implementados. `MetodosNumericosRestController` expoe sistemas lineares e condicionamento por HTTP. Eliminacao de Gauss, interpolacao linear, Newton-Raphson, splines e analise de estabilidade ainda estao pendentes.
 - `otimizacao/`: servicos de Markowitz, programacao quadratica, algoritmo genetico e PSO; ainda sem implementacao funcional.
-- `precificacao/`: arvore binomial e Cox-Ross-Rubinstein implementados para precificacao de call e put. `PrecificacaoController` demonstra ambos. Black-Scholes, diferencas finitas e Monte Carlo ainda estao pendentes.
+- `precificacao/`: arvore binomial e Cox-Ross-Rubinstein implementados para precificacao de call e put e expostos pelo `PrecificacaoRestController`. Black-Scholes, diferencas finitas e Monte Carlo ainda estao pendentes.
 - `risco/`: o servico de Value at Risk ainda e um esqueleto.
-- `dto/` e `exception/`: tipos de entrada/saida e excecoes especificas das funcionalidades que os utilizam.
+- `dto/` e `exception/`: tipos de entrada/saida e excecoes especificas das funcionalidades que os utilizam. DTOs recebidos pela API aplicam Jakarta Bean Validation; regras matematicas entre parametros permanecem validadas pelos servicos.
+
+### Endpoints REST
+
+- `POST /api/amortizacoes`: calcula tabela SAC ou PRICE.
+- `POST /api/avaliacoes/investimentos/analise`: calcula indicadores de um investimento.
+- `POST /api/avaliacoes/investimentos/comparacao`: compara dois investimentos usando a mesma taxa de desconto.
+- `POST /api/metodos-numericos/condicionamento`: calcula o numero de condicao na norma infinito.
+- `POST /api/metodos-numericos/sistemas/lu` e `POST /api/metodos-numericos/sistemas/cholesky`: resolvem sistemas por fatoracao.
+- `POST /api/metodos-numericos/sistemas/jacobi` e `POST /api/metodos-numericos/sistemas/gauss-seidel`: resolvem sistemas iterativos.
+- `POST /api/precificacao/arvore-binomial/call` e `POST /api/precificacao/arvore-binomial/put`: precificam opcoes pela arvore binomial.
+- `POST /api/precificacao/cox-ross-rubinstein`: retorna os precos CRR de call e put.
+
+Erros de validacao de request e parametros invalidos retornam HTTP 400 em JSON por meio de `shared/web/ApiExceptionHandler`.
 
 ### Pacotes de dominio no nivel raiz
 
@@ -75,13 +92,29 @@ Codigo que pode ser reutilizado por mais de uma funcionalidade:
 
 ## Executar demonstracoes
 
-As demonstracoes podem ser executadas pelas classes com metodo `main`:
+Iniciar a API localmente:
+
+```powershell
+mvn spring-boot:run
+```
+
+Executar a suite automatizada:
+
+```powershell
+mvn test
+```
+
+Construir e iniciar a aplicacao containerizada:
+
+```powershell
+docker compose up --build
+```
+
+A API fica disponivel em `http://localhost:8080`. As demonstracoes de console tambem podem ser executadas pelas classes:
 
 - `br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.MetodosNumericosController`
 - `br.edu.ufersa.Financas_Computacionais.features.precificacao.PrecificacaoController`
 
-O `Main` geral ainda nao chama esses controllers nem oferece uma interface unica para entrada de dados.
-
 ## Estado e proximos passos
 
-O projeto combina funcionalidades implementadas com esqueletos destinados a expansao. As prioridades estruturais identificadas sao integrar os modulos no ponto de entrada, implementar os servicos ainda vazios e criar testes automatizados para os calculos e validacoes. A lista de pendencias nesta documentacao descreve o codigo atual; requisitos adicionais do roteiro ou dos slides devem ser conferidos separadamente.
+O projeto combina funcionalidades REST implementadas com esqueletos destinados a expansao. Os testes cobrem os metodos lineares, comparacao de investimentos, SAC, a falha conhecida de PRICE, inicializacao Spring e validacao HTTP. Os proximos passos incluem implementar os servicos ainda vazios e corrigir a matriz do sistema PRICE. Requisitos adicionais do roteiro ou dos slides devem ser conferidos separadamente.

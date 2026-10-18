@@ -1,7 +1,9 @@
 package br.edu.ufersa.Financas_Computacionais.features.metodosNumericos;
 
 import br.edu.ufersa.Financas_Computacionais.shared.validation.ValidadorMatriz;
+import org.springframework.stereotype.Service;
 
+@Service
 public class GaussSeidelService {
 
 	private static final double TOLERANCIA_PADRAO = 1e-10;

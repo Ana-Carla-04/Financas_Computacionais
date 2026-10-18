@@ -6,7 +6,9 @@ import br.edu.ufersa.Financas_Computacionais.features.precificacao.exception.Par
 import br.edu.ufersa.Financas_Computacionais.features.precificacao.exception.ProbabilidadeInvalidaException;
 
 import java.util.function.DoubleUnaryOperator;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ArvoreBinomialService {
 
     /*

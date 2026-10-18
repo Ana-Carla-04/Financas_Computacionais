@@ -1,35 +1,23 @@
-# Comandos Docker
+# Executar a API
 
-Execute estes comandos na raiz do projeto, onde está o `docker-compose.yml`.
+A aplicacao e uma API REST Spring Boot. Ela escuta em `http://localhost:8080`.
 
-## Executar os testes
-
-Os testes automatizados rodam durante o build da imagem (`mvn verify`). Para
-executa-los diretamente no container de build:
+## Testes e build
 
 ```powershell
-docker compose build app
+mvn clean test
+mvn package
 ```
 
-## Executar as demonstracoes
+Os testes tambem sao executados durante a construcao da imagem (`mvn verify`).
 
-A imagem inicia o `MetodosNumericosController`, que demonstra LU, Cholesky,
-Jacobi e Gauss-Seidel. O container e um programa de console, nao um servidor
-HTTP; os resultados aparecem nos logs e o processo termina ao fim da execucao.
+## Executar localmente
 
 ```powershell
-docker compose run --rm app
+mvn spring-boot:run
 ```
 
-Para executar as demonstracoes de precificacao pela imagem:
-
-```powershell
-docker compose run --rm --entrypoint java app -cp /app/app.jar br.edu.ufersa.Financas_Computacionais.features.precificacao.PrecificacaoController
-```
-
-## Construir e iniciar
-
-Reconstruir a imagem e executar em primeiro plano:
+## Executar com Docker Compose
 
 ```powershell
 docker compose up --build
@@ -41,30 +29,48 @@ Executar em segundo plano:
 docker compose up --build -d
 ```
 
-Iniciar usando a imagem ja construida:
+Ver logs e parar a aplicacao:
 
 ```powershell
-docker compose up
-```
-
-Executar sem o Compose:
-
-```powershell
-docker run --rm financas-computacionais:local
-```
-
-## Verificar o estado
-
-```powershell
-docker compose ps
-docker compose logs app
-```
-
-Como o container e um programa de console de execucao curta, ele normalmente
-termina depois de imprimir os resultados; nao e esperado que permaneça ativo.
-
-## Parar e remover
-
-```powershell
+docker compose logs -f app
 docker compose down
 ```
+
+## Endpoints implementados
+
+- `POST /api/amortizacoes` calcula uma tabela SAC ou PRICE. O calculo PRICE ainda reporta a falha de matriz singular documentada nos testes.
+- `POST /api/avaliacoes/investimentos/analise` calcula indicadores para um investimento.
+- `POST /api/avaliacoes/investimentos/comparacao` compara dois investimentos pela mesma taxa de desconto.
+- `POST /api/metodos-numericos/condicionamento` calcula o numero de condicao na norma infinito.
+- `POST /api/metodos-numericos/sistemas/lu` resolve um sistema por fatoracao LU.
+- `POST /api/metodos-numericos/sistemas/cholesky` resolve um sistema por Cholesky.
+- `POST /api/metodos-numericos/sistemas/jacobi` resolve por Jacobi.
+- `POST /api/metodos-numericos/sistemas/gauss-seidel` resolve por Gauss-Seidel.
+- `POST /api/precificacao/arvore-binomial/call` e `POST /api/precificacao/arvore-binomial/put` calculam os precos pela arvore binomial.
+- `POST /api/precificacao/cox-ross-rubinstein` calcula call e put pelo modelo CRR.
+
+Exemplo de request para amortizacao:
+
+```json
+{
+  "sistema": "SAC",
+  "valorFinanciado": 100000,
+  "taxaJuros": 0.01,
+  "meses": 12
+}
+```
+
+Exemplo de request para resolver sistema linear:
+
+```json
+{
+  "matriz": [[10, -1, 2], [-1, 11, -1], [2, -1, 10]],
+  "termosIndependentes": [6, 22, -10]
+}
+```
+
+Jacobi e Gauss-Seidel aceitam opcionalmente `chuteInicial`, `tolerancia` e `maxIteracoes`; informe tolerancia e limite de iteracoes juntos.
+
+Erros de Bean Validation e parametros invalidos retornam HTTP 400 com JSON contendo a mensagem e, quando aplicavel, os erros por campo.
+
+Os modulos que ainda sao esqueletos nao possuem endpoints.
