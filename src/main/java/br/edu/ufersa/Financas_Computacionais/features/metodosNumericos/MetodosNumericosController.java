@@ -121,4 +121,13 @@ public class MetodosNumericosController {
         System.out.println();
         controller.demonstrarGaussSeidel();
     }
+
+    public void demonstrarAmortizacao() {
+        new br.edu.ufersa.Financas_Computacionais.features.amortizacao
+                .SistemaAmortizacaoController().demonstrar();
+    }
+
+    public void demonstrarCondicionamento() {
+        new CondicionamentoController().demonstrar();
+    }
 }
