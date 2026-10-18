@@ -1,67 +1,87 @@
-# Estrutura do projeto
+# Financas Computacionais
 
-O código está organizado como o Sistema_Web: um pacote por feature, e dentro de
-cada feature as mesmas peças.
+Projeto academico em Java para implementar metodos numericos e modelos de financas computacionais. O codigo-fonte esta em `src/main/java`, organizado pelo pacote base `br.edu.ufersa.Financas_Computacionais`.
 
-| Peça | Papel | Equivalente no Sistema_Web |
-|---|---|---|
-| `*Controller` | Porta de entrada da feature. Chama os Services e mostra o resultado no console. Guarda as demonstrações que antes ficavam no `main` de cada classe. | `*Controller` |
-| `*Service` | A lógica: validações e cálculos. Sem `System.out`. | `*Service` |
-| `dto/` | Objetos que levam dados para dentro (`*RequestDTO`) e para fora (`*ResponseDTO`) de um Service. | `dto/` |
-| `exception/` | Exceções específicas da feature. | `exception/` |
-| `shared/` | O que mais de uma feature usa: exceções base, validação, utilitários, modelos. | `shared/` |
+## Tecnologias e configuracao
 
+- Java configurado no Maven com `source` e `target` 26.
+- Maven (`pom.xml`) e usado como sistema de build.
+- O projeto nao declara dependencias externas no `pom.xml`.
+- Nao ha testes automatizados em `src/test` no estado atual.
+
+## Organizacao dos pacotes
+
+```text
+src/main/java/br/edu/ufersa/Financas_Computacionais/
+|-- Main.java
+|-- avaliacao/
+|-- features/
+|   |-- avaliacao/
+|   |-- interpolacao/
+|   |-- metodosNumericos/
+|   |   |-- dto/
+|   |   `-- exception/
+|   |-- otimizacao/
+|   |-- precificacao/
+|   |   |-- dto/
+|   |   `-- exception/
+|   `-- risco/
+|-- interpolacao/
+|-- metodosNumericos/
+|-- modelo/
+|-- otimizacao/
+|-- precificacao/
+|-- risco/
+`-- shared/
+	|-- exception/
+	|-- util/
+	`-- validation/
 ```
-br.edu.ufersa.Financas_Computacionais
-├── Main.java
-├── features
-│   ├── metodosNumericos   (Controller, Services, dto/, exception/)
-│   ├── precificacao       (Controller, Services, dto/, exception/)
-│   ├── otimizacao         (Services)
-│   ├── interpolacao       (Services)
-│   ├── avaliacao          (Services)
-│   └── risco              (Services)
-└── shared
-    ├── exception          (ParametroInvalidoException e derivadas)
-    ├── validation         (ValidadorMatriz)
-    ├── util               (ImpressaoConsole, SubstituicaoTriangular, Matrizes, Normas)
-    └── modelo             (OpcaoFinanceira, CarteiraInvestimentos)
-```
 
-`dto/`, `exception/` e `*Controller` só existem nas features que já têm código.
-Quem implementar uma das outras cria essas pastas do mesmo jeito.
+### `Main.java`
 
-## Onde foi parar cada classe
+Ponto de entrada planejado para integrar os calculos. Atualmente contem apenas o esqueleto comentado; os exemplos executaveis estao nos controllers de cada area.
 
-| Antes | Agora |
-|---|---|
-| `metodosNumericos/FatoracaoLU` | `features/metodosNumericos/FatoracaoLUService` |
-| `metodosNumericos/FatoracaoCholesky` | `features/metodosNumericos/FatoracaoCholeskyService` |
-| `metodosNumericos/{AnaliseEstabilidade, Condicionamento, EliminacaoGauss, GaussSeidel, InterpolacaoLinear, Jacobi, NewtonRaphson, Spline}` | `features/metodosNumericos/<Nome>Service` |
-| `metodosNumericos/Matrizes`, `metodosNumericos/Normas` | `shared/util/` (mesmo nome) |
-| `precificacao/ArvoreBinomial` | `features/precificacao/ArvoreBinomialService` |
-| `precificacao/CoxRossRubinstein` | `features/precificacao/CoxRossRubinsteinService` |
-| `precificacao/{BlackScholes, DiferencasFinitas, MonteCarlo}` | `features/precificacao/<Nome>Service` |
-| `modelo/ResultadoPrecificacao` | `features/precificacao/dto/ResultadoPrecificacao` |
-| `modelo/{OpcaoFinanceira, CarteiraInvestimentos}` | `shared/modelo/` (mesmo nome) |
-| `otimizacao/{AlgoritmoGenetico, Markowitz, PSO, ProgramacaoQuadratica}` | `features/otimizacao/<Nome>Service` |
-| `interpolacao/{CurvaJuros, VolatilidadeImplicita}` | `features/interpolacao/<Nome>Service` |
-| `avaliacao/ComparacaoMetodos` | `features/avaliacao/ComparacaoMetodosService` |
-| `risco/ValueAtRisk` | `features/risco/ValueAtRiskService` |
+### `features/`
 
-Os comentários de RESPONSÁVEL e ASSUNTO das classes ainda sem código foram mantidos como estavam.
+Contem os servicos que concentram a logica das funcionalidades e os controllers usados para demonstracoes no console.
 
-## O que mudou no uso das classes com código
+- `avaliacao/`: `ComparacaoInvestimentosService` calcula VPL, TIR, payback simples e payback descontado, e compara dois projetos pelo VPL. `ComparacaoMetodosService` ainda e um esqueleto.
+- `interpolacao/`: servicos de curva de juros e volatilidade implicita; ainda sem implementacao funcional.
+- `metodosNumericos/`: LU, Cholesky, Jacobi e Gauss-Seidel implementados. `MetodosNumericosController` demonstra esses quatro metodos. Eliminacao de Gauss, interpolacao linear, Newton-Raphson, splines, condicionamento e analise de estabilidade ainda estao pendentes.
+- `otimizacao/`: servicos de Markowitz, programacao quadratica, algoritmo genetico e PSO; ainda sem implementacao funcional.
+- `precificacao/`: arvore binomial e Cox-Ross-Rubinstein implementados para precificacao de call e put. `PrecificacaoController` demonstra ambos. Black-Scholes, diferencas finitas e Monte Carlo ainda estao pendentes.
+- `risco/`: o servico de Value at Risk ainda e um esqueleto.
+- `dto/` e `exception/`: tipos de entrada/saida e excecoes especificas das funcionalidades que os utilizam.
 
-- Os métodos deixaram de ser `static`: cria-se o Service (`new FatoracaoLUService()`) e chama-se o método nele.
-- `FatoracaoLU.decomposicaoLU` devolvia `double[][][]`. Agora devolve `FatoracaoLUResponseDTO`, com `L()` e `U()`.
-- `ArvoreBinomial.precificarCall/Put` recebiam 8 parâmetros soltos. Agora recebem um `ArvoreBinomialRequestDTO`.
-- `CoxRossRubinstein` era criada com `new` e depois consultada pelos getters. Agora `CoxRossRubinsteinService.calcular(request)` devolve um `CoxRossRubinsteinResponseDTO` com os parâmetros da árvore e o preço da call e da put.
-- As exceções específicas herdam de `ParametroInvalidoException`, que herda de `IllegalArgumentException`. Quem já capturava `IllegalArgumentException` continua funcionando, e as mensagens são as mesmas de antes.
-- Para rodar as demonstrações: `MetodosNumericosController.main` e `PrecificacaoController.main`.
+### Pacotes de dominio no nivel raiz
 
-## Diferenças em relação ao Sistema_Web
+Os pacotes `avaliacao/`, `interpolacao/`, `metodosNumericos/`, `modelo/`, `otimizacao/`, `precificacao/` e `risco/` mantem fachadas, tipos de dominio e esqueletos do trabalho. Nem todas as classes nesses pacotes possuem logica implementada.
 
-- Sem Spring: não há anotações, injeção de dependência nem `GlobalExceptionHandler`. Os Controllers recebem os Services pelo construtor, como no modelo.
-- Os DTOs são `record` (imutáveis), em vez de classes com getters e setters.
-- O pacote se chama `features`. No modelo está escrito `freatures`.
+- `avaliacao/ComparacaoInvestimentos` e uma fachada para o servico em `features/avaliacao/`.
+- `metodosNumericos/Jacobi` e `metodosNumericos/GaussSeidel` encaminham chamadas para seus servicos. Os demais algoritmos numericos nesse pacote que nao possuem servico ativo permanecem como trabalho pendente.
+- `modelo/` contem os esqueletos de `CarteiraInvestimentos` e `OpcaoFinanceira`.
+- Os modelos de precificacao ativos estao nos servicos em `features/precificacao/`; as antigas copias completas de LU, Cholesky, arvore binomial e Cox-Ross-Rubinstein foram removidas para evitar implementacoes paralelas.
+
+### `shared/`
+
+Codigo que pode ser reutilizado por mais de uma funcionalidade:
+
+- `validation/ValidadorMatriz`: validacao de matrizes e sistemas lineares.
+- `util/SubstituicaoTriangular`: substituicoes progressiva e regressiva usadas pelas fatoracoes.
+- `util/ImpressaoConsole`: formatacao e impressao de matrizes e vetores nas demonstracoes.
+- `exception/`: excecoes compartilhadas.
+- `util/Matrizes` e `util/Normas` existem como esqueletos; ainda nao oferecem operacoes implementadas.
+
+## Executar demonstracoes
+
+As demonstracoes podem ser executadas pelas classes com metodo `main`:
+
+- `br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.MetodosNumericosController`
+- `br.edu.ufersa.Financas_Computacionais.features.precificacao.PrecificacaoController`
+
+O `Main` geral ainda nao chama esses controllers nem oferece uma interface unica para entrada de dados.
+
+## Estado e proximos passos
+
+O projeto combina funcionalidades implementadas com esqueletos destinados a expansao. As prioridades estruturais identificadas sao integrar os modulos no ponto de entrada, implementar os servicos ainda vazios e criar testes automatizados para os calculos e validacoes. A lista de pendencias nesta documentacao descreve o codigo atual; requisitos adicionais do roteiro ou dos slides devem ser conferidos separadamente.

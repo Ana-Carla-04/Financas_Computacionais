@@ -10,11 +10,23 @@ public class MetodosNumericosController {
 
     private final FatoracaoLUService fatoracaoLUService;
     private final FatoracaoCholeskyService fatoracaoCholeskyService;
+    private final JacobiService jacobiService;
+    private final GaussSeidelService gaussSeidelService;
 
     public MetodosNumericosController(FatoracaoLUService fatoracaoLUService,
                                       FatoracaoCholeskyService fatoracaoCholeskyService) {
+        this(fatoracaoLUService, fatoracaoCholeskyService,
+                new JacobiService(), new GaussSeidelService());
+    }
+
+    public MetodosNumericosController(FatoracaoLUService fatoracaoLUService,
+                                      FatoracaoCholeskyService fatoracaoCholeskyService,
+                                      JacobiService jacobiService,
+                                      GaussSeidelService gaussSeidelService) {
         this.fatoracaoLUService = fatoracaoLUService;
         this.fatoracaoCholeskyService = fatoracaoCholeskyService;
+        this.jacobiService = jacobiService;
+        this.gaussSeidelService = gaussSeidelService;
     }
 
     public MetodosNumericosController() {
@@ -74,11 +86,39 @@ public class MetodosNumericosController {
         ImpressaoConsole.imprimirVetor("Solucao x", x);
     }
 
+    public void demonstrarJacobi() {
+        double[][] A = {
+                {10, -1, 2},
+                {-1, 11, -1},
+                {2, -1, 10}
+        };
+        double[] b = {6, 22, -10};
+        double[] x = jacobiService.resolverSistema(A, b);
+
+        ImpressaoConsole.imprimirVetor("Solucao por Jacobi", x);
+    }
+
+    public void demonstrarGaussSeidel() {
+        double[][] A = {
+                {10, -1, 2},
+                {-1, 11, -1},
+                {2, -1, 10}
+        };
+        double[] b = {6, 22, -10};
+        double[] x = gaussSeidelService.resolverSistema(A, b);
+
+        ImpressaoConsole.imprimirVetor("Solucao por Gauss-Seidel", x);
+    }
+
     public static void main(String[] args) {
         MetodosNumericosController controller = new MetodosNumericosController();
 
         controller.demonstrarFatoracaoLU();
         System.out.println();
         controller.demonstrarFatoracaoCholesky();
+        System.out.println();
+        controller.demonstrarJacobi();
+        System.out.println();
+        controller.demonstrarGaussSeidel();
     }
 }
