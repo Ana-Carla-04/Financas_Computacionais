@@ -3,94 +3,55 @@ import br.edu.ufersa.Financas_Computacionais.features.interpolacao.dto.Interpola
 import br.edu.ufersa.Financas_Computacionais.features.interpolacao.dto.InterpolacaoResponse;
 import org.springframework.stereotype.Service;
 
+// Valida dados e coordena os cálculos
+
 @Service
 public class InterpolacaoApplicationService {
 
-    private final InterpolacaoDomainService domainService;
-
-    public InterpolacaoApplicationService(
-            InterpolacaoDomainService domainService
-    ) {
+    private final InterpolacaoDomainService domainService; // var necessária
+    public InterpolacaoApplicationService (InterpolacaoDomainService domainService) {
         this.domainService = domainService;
-    }
+    } // construtor necessário
 
-    public InterpolacaoResponse calcular(
-            InterpolacaoRequest request
-    ) {
-        if (request.prazos() == null
-                || request.taxas() == null
-                || request.prazos().isEmpty()
-                || request.prazos().size() != request.taxas().size()) {
+    public InterpolacaoResponse calcular(InterpolacaoRequest request) {
+        if (request.prazos() == null || request.taxas() == null || request.prazos().isEmpty() || request.prazos().size() != request.taxas().size()) {
             throw new IllegalArgumentException(
                     "Informe a mesma quantidade de prazos e taxas."
             );
-        }
+        } //se qualquer um dos dados for null ou quantidades desiguais de prazo e taxa
 
         if (request.prazos().size() < 2) {
-            throw new IllegalArgumentException(
-                    "Informe pelo menos dois pontos."
-            );
-        }
+            throw new IllegalArgumentException ("Informe pelo menos dois pontos.");
+        } //Quantidade mínima de pontos
 
         for (int i = 0; i < request.prazos().size(); i++) {
-            if (!Double.isFinite(request.prazos().get(i))
-                    || !Double.isFinite(request.taxas().get(i))) {
+            if (!Double.isFinite(request.prazos().get(i)) || !Double.isFinite(request.taxas().get(i))) {
                 throw new IllegalArgumentException(
                         "Os prazos e as taxas devem ser números finitos."
                 );
-            }
+            } //Verifica se são números finitos
 
             for (int j = 0; j < i; j++) {
-                if (request.prazos().get(i)
-                        .equals(request.prazos().get(j))) {
-                    throw new IllegalArgumentException(
-                            "Os prazos devem ser distintos."
-                    );
+                if (request.prazos().get(i).equals(request.prazos().get(j))) {
+                    throw new IllegalArgumentException("Os prazos devem ser distintos.");
                 }
-            }
+            } //Verifica s eos prazos são distintos
         }
 
-        if (!Double.isFinite(request.prazoDesejado())) {
-            throw new IllegalArgumentException(
-                    "O prazo desejado deve ser um número finito."
-            );
-        }
+        TipoMetodoInterpolacao metodo = request.metodo(); //Var com o método escolhido
 
-        String metodo = request.metodo();
+        if (metodo == null) {throw new IllegalArgumentException ( "Informe LAGRANGE ou NEWTON.");
+        } // Não aceita método null
 
-        if (metodo == null) {
-            throw new IllegalArgumentException(
-                    "Informe LAGRANGE ou NEWTON."
-            );
-        }
+        double resultado = switch (metodo) {
+            // Caso seja LAGRANGE, ele chama o método lagrange do domain service
+            case LAGRANGE -> domainService.lagrange( request.prazos(), request.taxas(), request.prazoDesejado());
 
-        double resultado;
+            // Caso seja NEWTON, ele chama o método newton do domain service
+            case NEWTON -> domainService.newton(request.prazos(), request.taxas(), request.prazoDesejado());
+        };
 
-        switch (metodo.trim().toUpperCase()) {
-            case "LAGRANGE" ->
-                    resultado = domainService.lagrange(
-                            request.prazos(),
-                            request.taxas(),
-                            request.prazoDesejado()
-                    );
-
-            case "NEWTON" ->
-                    resultado = domainService.newton(
-                            request.prazos(),
-                            request.taxas(),
-                            request.prazoDesejado()
-                    );
-
-            default -> throw new IllegalArgumentException(
-                    "Método inválido. Use LAGRANGE ou NEWTON."
-            );
-        }
-
-        return new InterpolacaoResponse(
-                metodo.trim().toUpperCase(),
-                request.prazoDesejado(),
-                resultado
-        );
+        return new InterpolacaoResponse(metodo, request.prazoDesejado(), resultado); //Retorna o resultado
     }
 }
 

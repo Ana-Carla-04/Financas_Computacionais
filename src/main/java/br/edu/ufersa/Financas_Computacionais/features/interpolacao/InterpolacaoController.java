@@ -8,21 +8,15 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/interpolacao")
 public class InterpolacaoController {
 
+    //var e construtor necessários para alterações
     private final InterpolacaoApplicationService applicationService;
-
-    public InterpolacaoController(
-            InterpolacaoApplicationService applicationService
-    ) {
+    public InterpolacaoController(InterpolacaoApplicationService applicationService) {
         this.applicationService = applicationService;
     }
 
     @PostMapping
-    public ResponseEntity<InterpolacaoResponse> calcular(
-            @RequestBody InterpolacaoRequest request
-    ) {
-        InterpolacaoResponse response =
-                applicationService.calcular(request);
-
+    public ResponseEntity<InterpolacaoResponse> calcular(@RequestBody InterpolacaoRequest request) {
+        InterpolacaoResponse response = applicationService.calcular(request); //chama o método em application service
         return ResponseEntity.ok(response);
     }
 }
