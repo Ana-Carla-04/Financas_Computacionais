@@ -1,11 +1,16 @@
 package br.edu.ufersa.Financas_Computacionais.features.metodosNumericos;
 
+import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.dto.EliminacaoGaussResponseDTO;
 import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.dto.FatoracaoLUResponseDTO;
+import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.exception.PivoNuloException;
 import br.edu.ufersa.Financas_Computacionais.shared.util.ImpressaoConsole;
 
 // Porta de entrada da feature, como os Controllers do Sistema_Web: recebe a
 // chamada, repassa para os Services e apresenta o resultado (aqui, no console).
 // Os testes de demonstração que ficavam no main de cada fatoração estão aqui.
+//
+// Também reúne as demonstrações de eliminação gaussiana, condicionamento e
+// juros, executadas em sequência pelo main.
 public class MetodosNumericosController {
 
     private final FatoracaoLUService fatoracaoLUService;
@@ -120,6 +125,46 @@ public class MetodosNumericosController {
         controller.demonstrarJacobi();
         System.out.println();
         controller.demonstrarGaussSeidel();
+        System.out.println();
+        controller.demonstrarEliminacaoGauss();
+        System.out.println();
+        controller.demonstrarCondicionamento();
+        System.out.println();
+        controller.demonstrarJuros();
+    }
+
+    // Teste da eliminacao gaussiana, sem e com pivoteamento parcial
+    public void demonstrarEliminacaoGauss() {
+        EliminacaoGaussService gauss = new EliminacaoGaussService();
+
+        System.out.println("=== Gauss sem pivoteamento ===");
+        double[][] A1 = {{2, 1, -1}, {-3, -1, 2}, {-2, 1, 2}};
+        double[] b1 = {8, -11, -3};
+        EliminacaoGaussResponseDTO r1 = gauss.resolver(A1, b1, false);
+        ImpressaoConsole.imprimirMatriz("[U | y]", r1.matrizTriangular());
+        ImpressaoConsole.imprimirVetor("Solucao x", r1.solucao());
+        System.out.printf("Determinante: %.4f%n", r1.determinante());
+
+        System.out.println();
+        System.out.println("=== Sistema com a11 = 0 ===");
+        double[][] A2 = {{0, 1, 1}, {2, 1, -1}, {1, 3, -1}};
+        double[] b2 = {5, 1, 4};
+        try {
+            gauss.resolver(A2, b2, false);
+        } catch (PivoNuloException e) {
+            System.out.println("Sem pivoteamento: " + e.getMessage());
+        }
+
+        EliminacaoGaussResponseDTO r2 = gauss.resolver(A2, b2, true);
+        System.out.println("Com pivoteamento parcial (" + r2.trocas().size() + " trocas de linha):");
+        ImpressaoConsole.imprimirMatriz("[U | y]", r2.matrizTriangular());
+        ImpressaoConsole.imprimirVetor("Solucao x", r2.solucao());
+        System.out.printf("Determinante: %.4f%n", r2.determinante());
+    }
+
+    public void demonstrarJuros() {
+        new br.edu.ufersa.Financas_Computacionais.features.juros
+                .JurosController().demonstrar();
     }
 
     public void demonstrarAmortizacao() {
