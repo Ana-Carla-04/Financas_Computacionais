@@ -7,4 +7,5 @@ public class ParametrosJurosInvalidosException extends ParametroInvalidoExceptio
     public ParametrosJurosInvalidosException(String mensagem) {
         super(mensagem);
     }
+
 }
