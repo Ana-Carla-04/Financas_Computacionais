@@ -49,7 +49,41 @@ public class SistemaAmortizacaoService {
         this.fatoracaoLUService = fatoracaoLUService;
         this.condicionamentoService = condicionamentoService;
     }
+    // ---------------- validacao ----------------
 
+    private void validar(AmortizacaoRequestDTO request) {
+        if (request == null) {
+            throw new ParametrosAmortizacaoInvalidosException("Requisicao nula.");
+        }
+        if (request.sistema() == null || request.sistema().isBlank()) {
+            throw new ParametrosAmortizacaoInvalidosException(
+                    "Informe o sistema: SAC ou PRICE.");
+        }
+        String sistema = request.sistema().trim().toUpperCase(Locale.ROOT);
+        if (!sistema.equals("SAC") && !sistema.equals("PRICE")) {
+            throw new ParametrosAmortizacaoInvalidosException(
+                    "Sistema invalido. Use SAC ou PRICE.");
+        }
+        if (!Double.isFinite(request.valorFinanciado())
+                || request.valorFinanciado() <= TOLERANCIA) {
+            throw new ParametrosAmortizacaoInvalidosException(
+                    "O valor financiado deve ser positivo.");
+        }
+        if (!Double.isFinite(request.taxaJuros())
+                || request.taxaJuros() < 0.0) {
+            throw new ParametrosAmortizacaoInvalidosException(
+                    "A taxa de juros deve ser finita e nao negativa.");
+        }
+        if (request.meses() <= 0) {
+            throw new ParametrosAmortizacaoInvalidosException(
+                    "O numero de meses deve ser positivo.");
+        }
+        if (sistema.equals("PRICE")
+                && Math.abs(request.taxaJuros()) < TOLERANCIA) {
+            throw new ParametrosAmortizacaoInvalidosException(
+                    "No sistema PRICE a taxa de juros deve ser maior que zero.");
+        }
+    }
     public TabelaAmortizacaoDTO calcular(AmortizacaoRequestDTO request) {
         validar(request);
 
@@ -58,17 +92,31 @@ public class SistemaAmortizacaoService {
         double i = request.taxaJuros();
         double vp = request.valorFinanciado();
 
-        double[][] matriz = construirMatrizSistema(sistema, i, n);
-        AnaliseCondicionamentoDTO analise = analisarCondicionamento(matriz);
+        // --- FLUXO SEPARADO PARA O SAC (Usa Matriz + LU) ---
+        if (sistema.equals("SAC")) {
+            double[][] matriz = construirMatrizSistema(sistema, i, n);
+            AnaliseCondicionamentoDTO analise = analisarCondicionamento(matriz);
+            double[] b = construirVetorTermosIndependentes(sistema, vp, i, n);
+            double[] solucao = resolverComLU(matriz, b);
 
-        double[] b = construirVetorTermosIndependentes(sistema, vp, i, n);
-        double[] solucao = resolverComLU(matriz, b);
+            List<LinhaAmortizacao> linhas = montarTabelaSAC(vp, i, n);
+            return consolidar(sistema, linhas, analise);
 
-        List<LinhaAmortizacao> linhas = sistema.equals("SAC")
-                ? montarTabelaSAC(vp, i, n)
-                : montarTabelaPrice(vp, i, n, solucao);
+        } else {
+            // --- FLUXO PARA O PRICE (Ignora a matriz e usa a Fórmula Escalar) ---
+            // Evita a matriz singular e resolve com precisão matemática direta.
+            List<LinhaAmortizacao> linhas = montarTabelaPrice(vp, i, n, new double[n]);
 
-        return consolidar(sistema, linhas, analise);
+            // Como não passamos pela matriz, criamos um diagnóstico informativo
+            AnaliseCondicionamentoDTO analise = new AnaliseCondicionamentoDTO(
+                    0.0,
+                    "Nao se aplica",
+                    0,
+                    "O PRICE foi calculado por formula escalar para evitar matriz singular."
+            );
+
+            return consolidar(sistema, linhas, analise);
+        }
     }
 
     // ---------------- matriz do sistema ----------------
@@ -212,39 +260,5 @@ public class SistemaAmortizacaoService {
         );
     }
 
-    // ---------------- validacao ----------------
 
-    private void validar(AmortizacaoRequestDTO request) {
-        if (request == null) {
-            throw new ParametrosAmortizacaoInvalidosException("Requisicao nula.");
-        }
-        if (request.sistema() == null || request.sistema().isBlank()) {
-            throw new ParametrosAmortizacaoInvalidosException(
-                    "Informe o sistema: SAC ou PRICE.");
-        }
-        String sistema = request.sistema().trim().toUpperCase(Locale.ROOT);
-        if (!sistema.equals("SAC") && !sistema.equals("PRICE")) {
-            throw new ParametrosAmortizacaoInvalidosException(
-                    "Sistema invalido. Use SAC ou PRICE.");
-        }
-        if (!Double.isFinite(request.valorFinanciado())
-                || request.valorFinanciado() <= TOLERANCIA) {
-            throw new ParametrosAmortizacaoInvalidosException(
-                    "O valor financiado deve ser positivo.");
-        }
-        if (!Double.isFinite(request.taxaJuros())
-                || request.taxaJuros() < 0.0) {
-            throw new ParametrosAmortizacaoInvalidosException(
-                    "A taxa de juros deve ser finita e nao negativa.");
-        }
-        if (request.meses() <= 0) {
-            throw new ParametrosAmortizacaoInvalidosException(
-                    "O numero de meses deve ser positivo.");
-        }
-        if (sistema.equals("PRICE")
-                && Math.abs(request.taxaJuros()) < TOLERANCIA) {
-            throw new ParametrosAmortizacaoInvalidosException(
-                    "No sistema PRICE a taxa de juros deve ser maior que zero.");
-        }
-    }
 }
