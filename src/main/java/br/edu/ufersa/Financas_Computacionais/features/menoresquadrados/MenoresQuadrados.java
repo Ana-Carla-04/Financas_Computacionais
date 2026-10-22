@@ -1,3 +1,4 @@
+package br.edu.ufersa.Financas_Computacionais.features.menoresquadrados;
 
 public class MenoresQuadrados {
     private final double a;
