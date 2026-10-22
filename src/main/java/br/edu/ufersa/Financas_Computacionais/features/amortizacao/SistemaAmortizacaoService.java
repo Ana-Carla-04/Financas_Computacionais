@@ -92,30 +92,46 @@ public class SistemaAmortizacaoService {
         double i = request.taxaJuros();
         double vp = request.valorFinanciado();
 
-        // --- FLUXO SEPARADO PARA O SAC (Usa Matriz + LU) ---
-        if (sistema.equals("SAC")) {
+        try {
+            // === TENTATIVA DE USAR O LU PARA OS DOIS SISTEMAS ===
             double[][] matriz = construirMatrizSistema(sistema, i, n);
             AnaliseCondicionamentoDTO analise = analisarCondicionamento(matriz);
+
             double[] b = construirVetorTermosIndependentes(sistema, vp, i, n);
             double[] solucao = resolverComLU(matriz, b);
 
-            List<LinhaAmortizacao> linhas = montarTabelaSAC(vp, i, n);
+            List<LinhaAmortizacao> linhas = sistema.equals("SAC")
+                    ? montarTabelaSAC(vp, i, n)
+                    : montarTabelaPrice(vp, i, n, solucao);
+
+            // Se chegou até aqui, o LU funcionou!
             return consolidar(sistema, linhas, analise);
 
-        } else {
-            // --- FLUXO PARA O PRICE (Ignora a matriz e usa a Fórmula Escalar) ---
-            // Evita a matriz singular e resolve com precisão matemática direta.
-            List<LinhaAmortizacao> linhas = montarTabelaPrice(vp, i, n, new double[n]);
+        } catch (Exception e) {
+            // === PLANO B: SE DER ERRO (MATRIZ SINGULAR), USA A FÓRMULA ESCALAR ===
 
-            // Como não passamos pela matriz, criamos um diagnóstico informativo
-            AnaliseCondicionamentoDTO analise = new AnaliseCondicionamentoDTO(
-                    0.0,
-                    "Nao se aplica",
-                    0,
-                    "O PRICE foi calculado por formula escalar para evitar matriz singular."
-            );
+            // Verificamos se foi o erro da matriz singular
+            if (e.getClass().getSimpleName().equals("MatrizSingularException")
+                    || e.getClass().getSimpleName().equals("PivoNuloException")) {
 
-            return consolidar(sistema, linhas, analise);
+                System.out.println("Aviso: O LU falhou para o " + sistema + ". Usando fórmula escalar como plano B.");
+
+                // Calcula a tabela pela fórmula direta (sem matriz)
+                List<LinhaAmortizacao> linhas = montarTabelaPrice(vp, i, n, new double[n]);
+
+                // Cria um diagnóstico explicando o que aconteceu
+                AnaliseCondicionamentoDTO analiseFallback = new AnaliseCondicionamentoDTO(
+                        0.0,
+                        "Matriz Singular (Fallback)",
+                        0,
+                        "O LU detectou matriz singular. O sistema foi resiliente e usou a fórmula escalar."
+                );
+
+                return consolidar(sistema, linhas, analiseFallback);
+            }
+
+            // Se for outro erro (ex: dados inválidos), deixa o erro subir
+            throw e;
         }
     }
 
