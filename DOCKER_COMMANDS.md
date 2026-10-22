@@ -11,6 +11,13 @@ mvn package
 
 Os testes tambem sao executados durante a construcao da imagem (`mvn verify`).
 
+## Testar no Insomnia
+
+Importe a colecao `insomnia/financas-computacionais.insomnia.json` pelo menu
+**Import/Export** do Insomnia. Ela inclui requests agrupados por area, exemplos
+de sucesso e alguns casos negativos que devem retornar HTTP 400. O ambiente
+base usa `http://localhost:8080`.
+
 ## Executar localmente
 
 ```powershell
@@ -38,7 +45,7 @@ docker compose down
 
 ## Endpoints implementados
 
-- `POST /api/amortizacoes` calcula uma tabela SAC ou PRICE. O calculo PRICE ainda reporta a falha de matriz singular documentada nos testes.
+- `POST /api/amortizacoes` calcula uma tabela SAC ou PRICE. Se a matriz PRICE for singular, o servico usa a formula escalar como fallback e identifica isso no diagnostico.
 - `POST /api/avaliacoes/investimentos/analise` calcula indicadores para um investimento.
 - `POST /api/avaliacoes/investimentos/comparacao` compara dois investimentos pela mesma taxa de desconto.
 - `POST /api/metodos-numericos/condicionamento` calcula o numero de condicao na norma infinito.
@@ -46,8 +53,6 @@ docker compose down
 - `POST /api/metodos-numericos/sistemas/cholesky` resolve um sistema por Cholesky.
 - `POST /api/metodos-numericos/sistemas/jacobi` resolve por Jacobi.
 - `POST /api/metodos-numericos/sistemas/gauss-seidel` resolve por Gauss-Seidel.
-- `POST /api/precificacao/arvore-binomial/call` e `POST /api/precificacao/arvore-binomial/put` calculam os precos pela arvore binomial.
-- `POST /api/precificacao/cox-ross-rubinstein` calcula call e put pelo modelo CRR.
 
 Exemplo de request para amortizacao:
 

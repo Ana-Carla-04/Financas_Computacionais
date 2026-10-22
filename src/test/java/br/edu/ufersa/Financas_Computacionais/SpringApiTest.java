@@ -180,4 +180,118 @@ class SpringApiTest {
                 .andExpect(jsonPath("$.numeroCondicionamento").exists())
                 .andExpect(jsonPath("$.alerta").exists());
     }
+
+                @Test
+                void endpointsDeJurosValorPresenteEEquivalenciaRespondem() throws Exception {
+              mockMvc.perform(post("/api/juros/valor-presente")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("""
+                    {"regime":"COMPOSTO","valor":121,"taxa":0.1,"periodos":2}
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultado").exists());
+
+              mockMvc.perform(post("/api/juros/equivalencia-capitais")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("""
+                    {"taxas":[0.05],"prazos":[2],"metas":[110.25]}
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.aplicacoes.length()").value(1));
+                }
+
+                @Test
+                void interpolacaoAtendeLagrangeNewtonERejeitaPontosInvalidos() throws Exception {
+              String pontos = """
+                {"prazos":[1,2],"taxas":[0.1,0.2],"prazoDesejado":1.5,"metodo":"%s"}
+                """;
+
+              for (String metodo : new String[]{"LAGRANGE", "NEWTON"}) {
+                  mockMvc.perform(post("/api/v1/interpolacao")
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .content(pontos.formatted(metodo)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.metodo").value(metodo))
+                    .andExpect(jsonPath("$.taxaEstimada").exists());
+              }
+
+              mockMvc.perform(post("/api/v1/interpolacao")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("""
+                    {"prazos":[1,1],"taxas":[0.1,0.2],"prazoDesejado":1.5,"metodo":"NEWTON"}
+                    """))
+                .andExpect(status().isBadRequest());
+                }
+
+                @Test
+                void analiseEComparacaoDeInvestimentosRespondem() throws Exception {
+              mockMvc.perform(post("/api/avaliacoes/investimentos/analise")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("""
+                    {"nome":"Projeto A","fluxosCaixa":[-1000,600,600],"taxaDesconto":0.1}
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.vpl").exists());
+
+              mockMvc.perform(post("/api/avaliacoes/investimentos/comparacao")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("""
+                    {
+                      "primeiro":{"nome":"A","fluxosCaixa":[-1000,600,600],"taxaDesconto":0.1},
+                      "segundo":{"nome":"B","fluxosCaixa":[-1000,700,500],"taxaDesconto":0.1}
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.primeiro.vpl").exists())
+                .andExpect(jsonPath("$.recomendacao").exists());
+                }
+
+                @Test
+                void metodosNumericosAtendemSolversNormasECondicionamento() throws Exception {
+              String sistemaDiagonalDominante = """
+                {"matriz":[[10,-1,2],[-1,11,-1],[2,-1,10]],"termosIndependentes":[6,22,-10]}
+                """;
+              for (String metodo : new String[]{"lu", "jacobi", "gauss-seidel"}) {
+                  mockMvc.perform(post("/api/metodos-numericos/sistemas/" + metodo)
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .content(sistemaDiagonalDominante))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0]").exists())
+                    .andExpect(jsonPath("$[1]").exists())
+                    .andExpect(jsonPath("$[2]").exists());
+              }
+
+              mockMvc.perform(post("/api/metodos-numericos/sistemas/cholesky")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("""
+                    {"matriz":[[4,1],[1,3]],"termosIndependentes":[1,2]}
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0]").exists());
+
+              String matrizIdentidade = "{\"matriz\":[[1,0],[0,1]]}";
+              mockMvc.perform(post("/api/metodos-numericos/condicionamento")
+                  .contentType(MediaType.APPLICATION_JSON).content(matrizIdentidade))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.numeroCondicionamento").value(1.0));
+              for (String norma : new String[]{"um", "infinito", "frobenius"}) {
+                  mockMvc.perform(post("/api/metodos-numericos/condicionamento/" + norma)
+                      .contentType(MediaType.APPLICATION_JSON).content(matrizIdentidade))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.numeroCondicionamento").exists());
+              }
+                }
+
+                @Test
+                void priceRetornaTabelaUsandoFallbackQuandoLUFalha() throws Exception {
+              mockMvc.perform(post("/api/amortizacoes")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("""
+                    {"sistema":"PRICE","valorFinanciado":100000,"taxaJuros":0.01,"meses":3}
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.linhas.length()").value(3))
+                .andExpect(jsonPath("$.condicionamento.classificacao")
+                  .value("Matriz Singular (Fallback)"));
+                }
 }

@@ -86,7 +86,7 @@ public class MetodosNumericosRestController {
         }
 
     @PostMapping("/sistemas/{metodo}")
-    public double[] resolverSistema(@PathVariable String metodo,
+        public double[] resolverSistema(@PathVariable("metodo") String metodo,
                                     @Valid @RequestBody SistemaLinearRequestDTO request) {
         return switch (metodo.toLowerCase()) {
             case "lu" -> fatoracaoLUService.resolverSistema(
