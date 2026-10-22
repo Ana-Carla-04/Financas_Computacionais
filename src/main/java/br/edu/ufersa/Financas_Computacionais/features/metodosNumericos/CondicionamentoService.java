@@ -1,8 +1,10 @@
 package br.edu.ufersa.Financas_Computacionais.features.metodosNumericos;
 
+import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.dto.CondicionamentoNormasResponseDTO;
 import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.dto.CondicionamentoResponseDTO;
 import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.exception.MatrizSingularException;
 import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.exception.PivoNuloException;
+import br.edu.ufersa.Financas_Computacionais.shared.util.Normas;
 import br.edu.ufersa.Financas_Computacionais.shared.validation.ValidadorMatriz;
 import org.springframework.stereotype.Service;
 
@@ -14,18 +16,31 @@ import org.springframework.stereotype.Service;
  *
  * A inversa é obtida resolvendo A*X = I coluna a coluna com a
  * fatoração LU já existente (Doolittle), reaproveitando os fatores.
+ *
+ * Extensão: calcular(A, norma) também permite as normas 1 e Frobenius,
+ * obtendo a inversa por eliminação gaussiana com pivoteamento parcial
+ * (EliminacaoGaussService). calcular(A) continua usando a norma infinito
+ * e LU, pois é o que a amortização utiliza.
+ *
  */
 @Service
 public class CondicionamentoService {
 
     private final FatoracaoLUService fatoracaoLUService;
+    private final EliminacaoGaussService eliminacaoGaussService;
 
     public CondicionamentoService() {
-        this(new FatoracaoLUService());
+        this(new FatoracaoLUService(), new EliminacaoGaussService());
     }
 
     public CondicionamentoService(FatoracaoLUService fatoracaoLUService) {
+        this(fatoracaoLUService, new EliminacaoGaussService());
+    }
+
+    public CondicionamentoService(FatoracaoLUService fatoracaoLUService,
+                                  EliminacaoGaussService eliminacaoGaussService) {
         this.fatoracaoLUService = fatoracaoLUService;
+        this.eliminacaoGaussService = eliminacaoGaussService;
     }
 
     public double normaInfinito(double[] vetor) {
@@ -101,6 +116,41 @@ public class CondicionamentoService {
                 classificar(kappa),
                 digitosPerdidos
         );
+    }
+
+    /**
+     * kappa(A) = ||A|| * ||A^-1|| na norma escolhida (1, infinito ou Frobenius).
+     * A inversa vem da eliminação gaussiana com pivoteamento parcial.
+     */
+    public CondicionamentoNormasResponseDTO calcular(double[][] A, TipoNorma norma) {
+        ValidadorMatriz.validarQuadradaFinita(A);
+
+        double normaA = normaMatriz(A, norma);
+        double normaInv = normaMatriz(eliminacaoGaussService.inversa(A), norma);
+        double kappa = normaA * normaInv;
+
+        if (!Double.isFinite(kappa)) {
+            throw new MatrizSingularException();
+        }
+
+        int digitosPerdidos = (int) Math.floor(Math.log10(Math.max(kappa, 1.0)));
+
+        return new CondicionamentoNormasResponseDTO(
+                norma,
+                normaA,
+                normaInv,
+                kappa,
+                classificar(kappa),
+                digitosPerdidos
+        );
+    }
+
+    private double normaMatriz(double[][] M, TipoNorma norma) {
+        return switch (norma) {
+            case UM -> Normas.matricial1(M);
+            case INFINITO -> Normas.matricialInfinito(M);
+            case FROBENIUS -> Normas.matricialFrobenius(M);
+        };
     }
 
     private String classificar(double kappa) {

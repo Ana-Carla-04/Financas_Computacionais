@@ -8,7 +8,6 @@ import java.util.List;
 public record InterpolacaoRequest(
         List<Double> prazos,
         List<Double> taxas,
-        double prazoDesejado,
+        Double prazoDesejado,
         TipoMetodoInterpolacao metodo
-) {
-}
+) {}
