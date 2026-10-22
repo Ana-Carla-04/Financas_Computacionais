@@ -7,6 +7,8 @@ public class InterpolacaoDomainService {
 
     //Método lagrange
     public double lagrange(List<Double> x, List<Double> y, double valor) {
+        validarDados(x, y, valor);
+
         // Guarda a quantidade de pontos informados.
         // Como cada prazo possui uma taxa correspondente, as listas devem ter o mesmo tamanho.
         int n = x.size();
@@ -22,10 +24,13 @@ public class InterpolacaoDomainService {
             }
             resultado += termo; // Soma os termos
         }
+        validarResultado(resultado);
         return resultado;
     }
 
     public double newton(List<Double> x, List<Double> y, double valor) {
+        validarDados(x, y, valor);
+
         int n = x.size(); // Guarda a quantidade de pontos conhecidos.
         double[] diferencas = new double[n]; // Armazena as taxas e diferencas
 
@@ -50,7 +55,48 @@ public class InterpolacaoDomainService {
             resultado = diferencas[i] + (valor - x.get(i)) * resultado; // formula do polinômio
         }
 
+        validarResultado(resultado);
         return resultado;
+    }
+
+    private void validarDados(List<Double> x, List<Double> y, double valor) {
+        if (x == null || y == null) {
+            throw new IllegalArgumentException("As listas de prazos e taxas são obrigatórias.");
+        }
+        if (x.size() < 2) {
+            throw new IllegalArgumentException("Informe pelo menos dois pontos.");
+        }
+        if (x.size() != y.size()) {
+            throw new IllegalArgumentException("As listas de prazos e taxas devem ter o mesmo tamanho.");
+        }
+        if (!Double.isFinite(valor)) {
+            throw new IllegalArgumentException("O prazo desejado deve ser um número finito.");
+        }
+
+        for (int i = 0; i < x.size(); i++) {
+            Double xi = x.get(i);
+            Double yi = y.get(i);
+
+            if (xi == null || yi == null) {
+                throw new IllegalArgumentException("Os prazos e as taxas não podem conter valores nulos.");
+            }
+            if (!Double.isFinite(xi) || !Double.isFinite(yi)) {
+                throw new IllegalArgumentException("Os prazos e as taxas devem ser números finitos.");
+            }
+            for (int j = 0; j < i; j++) {
+                // comparação primitiva: trata 0.0 == -0.0 como repetido
+                if (xi.doubleValue() == x.get(j).doubleValue()) {
+                    throw new IllegalArgumentException("Não podem existir prazos repetidos.");
+                }
+            }
+        }
+    }
+
+    private void validarResultado(double resultado) {
+        if (!Double.isFinite(resultado)) {
+            throw new ArithmeticException(
+                    "Não foi possível calcular um resultado finito.");
+        }
     }
 }
 
