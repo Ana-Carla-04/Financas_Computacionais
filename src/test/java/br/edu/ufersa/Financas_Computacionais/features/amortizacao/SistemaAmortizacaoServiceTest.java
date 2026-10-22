@@ -1,11 +1,9 @@
 package br.edu.ufersa.Financas_Computacionais.features.amortizacao;
 
 import br.edu.ufersa.Financas_Computacionais.features.amortizacao.dto.AmortizacaoRequestDTO;
-import br.edu.ufersa.Financas_Computacionais.features.metodosNumericos.exception.MatrizSingularException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SistemaAmortizacaoServiceTest {
 
@@ -26,10 +24,21 @@ class SistemaAmortizacaoServiceTest {
     }
 
     @Test
-    void priceRegistraFalhaConhecidaDaMatrizSingular() {
+        void priceUsaFormulaEscalarQuandoMatrizSingular() {
         var request = new AmortizacaoRequestDTO("PRICE", 100_000.0, 0.01, 3);
 
-        assertThrows(MatrizSingularException.class,
-                () -> new SistemaAmortizacaoService().calcular(request));
+        var resultado = new SistemaAmortizacaoService().calcular(request);
+        double parcelaEsperada = 100_000.0 * 0.01
+            / (1.0 - Math.pow(1.01, -3));
+
+        assertEquals("PRICE", resultado.sistema());
+        assertEquals(3, resultado.linhas().size());
+        assertEquals(parcelaEsperada, resultado.parcelaInicial(), TOLERANCIA);
+        assertEquals(parcelaEsperada, resultado.parcelaFinal(), TOLERANCIA);
+        assertEquals("Matriz Singular (Fallback)",
+            resultado.condicionamento().classificacao());
+        assertEquals(0.0, resultado.condicionamento().kappa(), TOLERANCIA);
+        assertEquals(0.0,
+            resultado.linhas().get(2).saldoFinal(), TOLERANCIA);
     }
 }
