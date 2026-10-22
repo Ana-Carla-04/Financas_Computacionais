@@ -1,4 +1,4 @@
-package br.edu.ufersa.Financas_Computacionais.features.menoresquadrados;
+package br.edu.ufersa.Financas_Computacionais.features.interpolacaosmq;
 
 public class MenoresQuadrados {
     private final double a;

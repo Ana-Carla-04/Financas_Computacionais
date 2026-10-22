@@ -1,4 +1,4 @@
-package br.edu.ufersa.Financas_Computacionais.features.splines;
+package br.edu.ufersa.Financas_Computacionais.features.interpolacaosmq;
 
 import java.util.Arrays;
 
